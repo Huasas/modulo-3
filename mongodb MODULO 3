@@ -1,0 +1,88 @@
+import pymongo
+
+
+client = pymongo.MongoClient("mongodb://localhost:27017/")
+db = client["mi_basededatos"]
+
+
+palabras = db["palabras"]
+conceptos = db["conceptos"]
+
+
+def crear_concepto():
+    nombre = input("Nombre del concepto: ")
+    descripcion = input("Descripción del concepto: ")
+    concepto = {"nombre": nombre, "descripcion": descripcion}
+    conceptos.insert_one(concepto)
+
+def crear_palabra():
+    palabra = input("Palabra: ")
+    concepto_id = input("ID del concepto: ")
+    palabra = {"palabra": palabra, "concepto_id": concepto_id}
+    palabras.insert_one(palabra)
+
+def editar_palabra():
+    id_palabra = input("ID de la palabra a editar: ")
+    palabra = palabras.find_one({"_id": id_palabra})
+    if palabra is None:
+        print("La palabra no existe")
+        return
+
+    nueva_palabra = input(f"Palabra ({palabra['palabra']}): ")
+    nuevo_concepto_id = input(f"ID del concepto ({palabra['concepto_id']}): ")
+
+    update = {}
+    if nueva_palabra:
+        update["palabra"] = nueva_palabra
+    if nuevo_concepto_id:
+        update["concepto_id"] = nuevo_concepto_id
+
+    palabras.update_one({"_id": id_palabra}, {"$set": update})
+    print("Palabra actualizada")
+
+
+def eliminar_palabra():
+    id_palabra = input("ID de la palabra a eliminar: ")
+    palabra = palabras.find_one({"_id": id_palabra})
+    if palabra is None:
+        print("La palabra no existe")
+        return
+
+    palabras.delete_one({"_id": id_palabra})
+    print("Palabra eliminada")
+
+
+def mostrar_palabras():
+    for palabra in palabras.find():
+        concepto = conceptos.find_one({"_id": palabra["concepto_id"]})
+        print(f"{palabra['_id']}: {palabra['palabra']} ({concepto['nombre']})")
+
+
+def menu():
+    print("***Bienvenido al diccionario Panameno***")
+    print("1. Agregar palabra")
+    print("2. Editar palabra")
+    print("3. Eliminar palabra")
+    print("4. Mostrar todas las palabras")
+    print("5. Salir")
+
+def main():
+    while True:
+        menu()
+        opcion = input("Selecciona una opción: ")
+
+        if opcion == "1":
+            crear_palabra()
+        elif opcion == "2":
+            editar_palabra()
+        elif opcion == "3":
+            eliminar_palabra()
+        elif opcion == "4":
+            mostrar_palabras()
+        elif opcion == "5":
+            break
+        else:
+            print("Opción no válida")
+
+if __name__ == "__main__":
+    main()
